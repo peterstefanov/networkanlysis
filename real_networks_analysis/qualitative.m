@@ -23,7 +23,7 @@ Adj = zeros(NUMBER_NODES);
 Adj = sparse(Adj);
         
 % iterate across all edges and populate adjacency matrix with one's
-for d=1:size(EdgeList, 1);  
+for d = 1 : NUMBER_EDGES;  
    Adj(find(nodes == EdgeList(d, 1)),find(nodes == EdgeList(d, 2))) = 1;  
 end
 
