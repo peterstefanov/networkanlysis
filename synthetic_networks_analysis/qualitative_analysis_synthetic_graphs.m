@@ -1,47 +1,24 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%  Real world network graph  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%% Price's %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%NUMBER_NODES = 1024;
+%Adj = priceModel(NUMBER_NODES);
 
-%load edge list of newqtork - textfile in the format 
-%Directed edge A->B, where A - FromNodeId	and B - ToNodeId.
-EdgeList = load('Wiki-Vote.txt'); 
+%%make adjacency matrix sparse
+%Adj = sparse(Adj);
 
-%set to 1 if dealing with directed graph dataset, otherwise to 0
-isDirected = 1;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%% Kronecker %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+SCALE = 10;
+edgefactor = 16;
 
-%sort the edge list
-sortrows(EdgeList);
-
-% number of edges in the graph
-NUMBER_EDGES = length(EdgeList);
-
-% get all nodes, sorted
-nodes = sort(unique([EdgeList(:, 1) EdgeList(:, 2)]));
-
-% number of nodes in the graph
-NUMBER_NODES = numel(nodes);
-
-% initialize adjacency matrix
-Adj = zeros(NUMBER_NODES);
-    
-% iterate across all edges and populate adjacency matrix with one's
-% calculate the degree per vertex and populate the vector
-switch (isDirected)
-   case 1 %directed graph
-     for d = 1 : NUMBER_EDGES; 
-      if (~isempty(find(nodes == EdgeList(d, 1))) == 1)
-         Adj(find(nodes == EdgeList(d, 1)), find(nodes == EdgeList(d, 2))) = 1; 
-      end 
-     end 
-   otherwise %undericted graph
-     for d = 1 : NUMBER_EDGES; 
-         Adj(find(nodes == EdgeList(d, 1)), find(nodes == EdgeList(d, 2))) = 1; 
-         Adj(find(nodes == EdgeList(d, 2)), find(nodes == EdgeList(d, 1))) = 1;
-     end    
-endswitch 
-
-%make adjacency matrix sparse
-Adj = sparse(Adj);
+kron = kroneckerModel(SCALE, edgefactor);
+Adj = sparse (kron(1,:)+1, kron(2,:)+1, ones (1, size (kron, 2)));
+% remove self-loops
+Adj = Adj - diag(diag(Adj));
+NUMBER_NODES = length(Adj);
+%%%%%%%%%%%%%%%%%%%%% END GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % no multiple edges
 Adj = Adj > 0; 
@@ -107,7 +84,6 @@ else %directed
 end
    K = length(i);
 
-
 for k = 1 : K
     degi(k) = alldeg(i(k));
     degj(k) = alldeg(j(k));
@@ -119,6 +95,10 @@ r = (sum(degi.*degj) / K - (sum(0.5*(degi + degj)) / K)^2) / (sum(0.5*(degi.^2 +
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%  Compute Degree Distribution  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+figure(1);
+spy (Adj);
+hold on
+title('Synthetic graph - density plot');
 deg = sort(deg, "descend");
 
 for i = 1 : NUMBER_NODES; 
