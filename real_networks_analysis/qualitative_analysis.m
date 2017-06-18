@@ -6,6 +6,9 @@
 %Directed edge A->B, where A - FromNodeId	and B - ToNodeId.
 EdgeList = load('Wiki-Vote.txt'); 
 
+%set to 1 if dealing with directed graph dataset, otherwise to anything
+isDirected = 1;
+
 %sort the edge list
 sortrows(EdgeList);
 
@@ -18,14 +21,36 @@ nodes = sort(unique([EdgeList(:, 1) EdgeList(:, 2)]));
 % number of nodes in the graph
 NUMBER_NODES = numel(nodes);
 
-% initialize adjacency matrix nad make it sparse
+% vector to hold the degree per node in the graph
+degree = zeros(1, NUMBER_NODES); 
+
+ii = EdgeList(:, 1);
+jj = EdgeList(:, 2);
+
+% initialize adjacency matrix
 Adj = zeros(NUMBER_NODES);
-Adj = sparse(Adj);
-        
+    
 % iterate across all edges and populate adjacency matrix with one's
-for d = 1 : NUMBER_EDGES;  
-   Adj(find(nodes == EdgeList(d, 1)),find(nodes == EdgeList(d, 2))) = 1;  
-end
+% calculate the degree per vertex and populate it the vector
+switch (isDirected)
+   case 1 %directed graph
+     for d = 1 : NUMBER_EDGES; 
+      if (~isempty(find(nodes == EdgeList(d, 1))) == 1)
+         degree(find(nodes == EdgeList(d, 1))) += 1;
+         Adj(find(nodes == EdgeList(d, 1)), find(nodes == EdgeList(d, 2))) = 1; 
+      end 
+     end 
+   otherwise %undericted graph
+     for d = 1 : NUMBER_EDGES; 
+         degree(find(nodes == EdgeList(d, 1))) += 1;
+         degree(find(nodes == EdgeList(d, 2))) += 1;
+         Adj(find(nodes == EdgeList(d, 1)), find(nodes == EdgeList(d, 2))) = 1; 
+         Adj(find(nodes == EdgeList(d, 2)), find(nodes == EdgeList(d, 1))) = 1;
+     end    
+endswitch 
+
+%make adjacency matrix sparse
+Adj = sparse(Adj);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Compute clustering coefficient %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -78,3 +103,14 @@ end;
 
 % compute assortativity
 r_undirected = (sum(degi.*degj) / KK - (sum(0.5*(degi + degj)) / KK)^2) / (sum(0.5*(degi.^2 + degj.^2)) / KK - (sum(0.5*(degi + degj)) / KK)^2);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%  Compute Degree Distribution  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+degree = sort(degree, "descend");
+
+for i = 1 : NUMBER_NODES; 
+  if (degree(i) >= 50)
+    degree_plot(i) = log(degree(i));
+  end 
+end
