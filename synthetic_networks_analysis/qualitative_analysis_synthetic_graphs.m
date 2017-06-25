@@ -1,23 +1,23 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%% Price's %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%NUMBER_NODES = 1024;
-%Adj = priceModel(NUMBER_NODES);
+NUMBER_NODES = 2048;
+Adj = priceModel(NUMBER_NODES);
 
 %%make adjacency matrix sparse
-%Adj = sparse(Adj);
+Adj = sparse(Adj);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%% Kronecker %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-SCALE = 10;
-edgefactor = 16;
+%SCALE = 11;
+%edgefactor = 16;
 
-kron = kroneckerModel(SCALE, edgefactor);
-Adj = sparse (kron(1,:)+1, kron(2,:)+1, ones (1, size (kron, 2)));
+%kron = kroneckerModel(SCALE, edgefactor);
+%Adj = sparse (kron(1,:)+1, kron(2,:)+1, ones (1, size (kron, 2)));
 % remove self-loops
-Adj = Adj - diag(diag(Adj));
-NUMBER_NODES = length(Adj);
+%dj = Adj - diag(diag(Adj));
+%NUMBER_NODES = length(Adj);
 %%%%%%%%%%%%%%%%%%%%% END GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % no multiple edges
@@ -99,10 +99,49 @@ figure(1);
 spy (Adj);
 hold on
 title('Synthetic graph - density plot');
-deg = sort(deg, "descend");
 
+deg = sort(deg, "descend");
+deg = full(deg);
 for i = 1 : NUMBER_NODES; 
-  if (deg(i) >= 50)
-    degree_plot(i) = log(deg(i));
+  if (deg(i) >= 6)
+    x(i) = log(deg(i));
+    y(i) = log(i/NUMBER_NODES);
   end 
 end
+
+figure(2);
+plot (x, y, 'o');
+hold on
+title('Price log-log plot of the degree rank vs the degree size');
+xlabel ("LOG DEGREE");
+ylabel ("LOG RANK");
+
+% Count how many data points we have
+m = length(x);
+% Add a column of all ones (intercept term) to x
+X = [ones(m, 1) x(:)];
+% Calculate theta
+theta = (pinv(X'*X))*X'*y(:);
+
+% Plot the fitted equation from the regression
+hold on; %keeps previous plot visible
+x_points = X(:,2);
+y_points = X*theta;
+plot(x_points, y_points, '-')
+legend('Degree distribution', 'Linear regression')
+hold off 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% Calculate the slope of line %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%second parameter return for theta contains the slope value, still no harm to
+%calculate the slope manually
+y1 = y_points(2);
+y2 = y_points(m - 1);
+
+x1 = x_points(2);
+x2 = x_points(m - 1);
+
+slope = (y2 - y1) / (x2 -x1);
+
+alpha = abs(slope) + 1;
