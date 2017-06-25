@@ -7,7 +7,7 @@
 EdgeList = load('Wiki-Vote.txt'); 
 
 %set to 1 if dealing with directed graph dataset, otherwise to 0
-isDirected = 1;
+isDirected = 0;
 
 %sort the edge list
 sortrows(EdgeList);
@@ -142,8 +142,25 @@ X = [ones(m, 1) x(:)];
 % Calculate theta
 theta = (pinv(X'*X))*X'*y(:);
 
-% Plot the fitted equation we got from the regression
-hold on; % this keeps our previous plot of the training data visible
-plot(X(:,2), X*theta, '-')
+% Plot the fitted equation from the regression
+hold on; % keeps previous plot visible
+x_points = X(:,2);
+y_points = X*theta;
+plot(x_points, y_points, '-')
 legend('Degree distribution', 'Linear regression')
 hold off 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% Calculate the slope of line %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%second parameter return for theta contains the slope value, still no harm to
+%calculate the slope manually
+y1 = y_points(2);
+y2 = y_points(m - 1);
+
+x1 = x_points(2);
+x2 = x_points(m - 1);
+
+slope = (y2 - y1) / (x2 -x1);
+
+alpha = abs(slope) + 1;
