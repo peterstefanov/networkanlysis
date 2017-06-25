@@ -120,9 +120,30 @@ r = (sum(degi.*degj) / K - (sum(0.5*(degi + degj)) / K)^2) / (sum(0.5*(degi.^2 +
 %%%%%%%%%%%%%%%%%%%  Compute Degree Distribution  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 deg = sort(deg, "descend");
-
+deg = full(deg);
 for i = 1 : NUMBER_NODES; 
   if (deg(i) >= 50)
-    degree_plot(i) = log(deg(i));
+    x(i) = log(deg(i));
+    y(i) = log(i/NUMBER_NODES);
   end 
 end
+
+figure(2);
+plot (x, y, 'o');
+hold on
+title('Wiki Vote log-log plot of the degree rank vs the degree size');
+xlabel ("LOG DEGREE");
+ylabel ("LOG RANK");
+
+% Count how many data points we have
+m = length(x);
+% Add a column of all ones (intercept term) to x
+X = [ones(m, 1) x(:)];
+% Calculate theta
+theta = (pinv(X'*X))*X'*y(:);
+
+% Plot the fitted equation we got from the regression
+hold on; % this keeps our previous plot of the training data visible
+plot(X(:,2), X*theta, '-')
+legend('Degree distribution', 'Linear regression')
+hold off 
