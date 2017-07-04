@@ -33,7 +33,6 @@ Adj = sparse(Adj);
 % function later on.
 Adj = 1.0*(Adj>0);
 
-
 %Form the (normalised) Laplacian matrix
 % d is the vector of vertex degrees
 d = sum(Adj);
@@ -66,46 +65,70 @@ for d = 1 : NUMBER_NODES;
   nodes(d) = nodes(d) + 1;
 end
 
-NUMBER_K_COMMUNITIES = 9;
+NUMBER_K_COMMUNITIES = 17;
 
-fid = fopen('results.txt', 'w');
+fid = fopen('C:\Users\stefp\COMP42270\networkanalysisgit\networkanlysis\communityfinding\results.txt', 'w');
 header1 = 'Community number ';
-header2 = 'Modularity';
-header3 = 'Number of edges cut';
-fprintf(fid, [header1  '   ' header2 '   ' header3 '\n']);
-%compute 2 - k communities
+header2 = 'Modularity Eigen';
+header3 = 'Number of edges cut Eigen';
+header4 = 'Modularity Adj';
+header5 = 'Number of edges cut Adj';
+fprintf(fid, [header1  '    ' header2 '            ' header3 '           ' header4 '              ' header5  '\n']);
+
 communities = {};
-  
+communitiesAdj = {};  
 for k = 2 : NUMBER_K_COMMUNITIES; 
   % Use kmeans to cluster the points in the vector W
-  %[classes, centers, sumd, D] = kmeans(W,4);
-  clust = kmeans(W, k);
-  
-
+  partitionEigenVector = kmeans(W, k);
+  % Use the columns of A directly for the clustering
+  partitionAdj = kmeans(Adj, k);
   for kk = 1 : k; 
     %for each community - create a vector with vertices in it
-    communities{kk} = nodes(clust==kk, 1);
+    communities{kk} = nodes(partitionEigenVector == kk, 1);
+    communitiesAdj{kk} = nodes(partitionAdj == kk, 1);
   end
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%% Compute modularity per each  k kmeans cutting %%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% Compute modularity per each  k kmeans clustering %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   Q = 0;
+  Qadj = 0;
   communityEdges = 0;
-  for m = 1 : length(communities);
-    communityEdges = sum(sum(Adj(communities{m}, communities{m})))/2; 
+  communityEdgesAdj = 0;
+  for i = 1 : length(communities);
+    
+    %get a subgraph from Adj, for each cluster and count the edges
+    %divided by two as it is udireted graph
+    communityEdges = sum(sum(Adj(communities{i}, communities{i})))/2; 
+    communityEdgesAdj = sum(sum(Adj(communitiesAdj{i}, communitiesAdj{i})))/2; 
+    
+    %fraction of edges for this community
     e_mm = communityEdges / NUMBER_EDGES;
-    a_m = sum(sum(Adj(:, communities{m}))) / NUMBER_EDGES - e_mm;
-    Q = Q + (e_mm - a_m^2); 
+    e_mmAdj = communityEdgesAdj / NUMBER_EDGES;
+    
+    a_m = sum(sum(Adj(:, communities{i}))) / NUMBER_EDGES - e_mm;
+    a_mAdj = sum(sum(Adj(:, communitiesAdj{i}))) / NUMBER_EDGES - e_mmAdj;
+    
+    Q = Q + (e_mm - a_m^2);
+    Qadj = Qadj + (e_mmAdj - a_mAdj^2); 
   end
   
   % number of edge cuts per community NUMBER_EDGES-communityEdges
-  fprintf(fid, '%f             %f              %f \n', [k Q NUMBER_EDGES-communityEdges]');
+  fprintf(fid, '%f             %f              %f \n', [k Q NUMBER_EDGES-communityEdges Qadj NUMBER_EDGES-communityEdgesAdj]');
 end
 
 fclose(fid);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%% Fast detection of communities using modularity optimisation %%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+[bestCommunityPartition, modularity] = fast_mo(Adj);
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% compute NMI for two partitions  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+nmi = nmi(partitionEigenVector, bestCommunityPartition);
+nmiKmeans = nmi(partitionEigenVector, partitionAdj);
 
 
 
