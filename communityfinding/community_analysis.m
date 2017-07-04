@@ -73,7 +73,7 @@ header2 = 'Modularity Eigen';
 header3 = 'Number of edges cut Eigen';
 header4 = 'Modularity Adj';
 header5 = 'Number of edges cut Adj';
-fprintf(fid, [header1  '    ' header2 '            ' header3 '           ' header4 '              ' header5  '\n']);
+fprintf(fid, [header1  '    ' header2 '      ' header3 '       ' header4 '        ' header5  '\n']);
 
 communities = {};
 communitiesAdj = {};  
@@ -114,7 +114,7 @@ for k = 2 : NUMBER_K_COMMUNITIES;
   end
   
   % number of edge cuts per community NUMBER_EDGES-communityEdges
-  fprintf(fid, '%f             %f              %f \n', [k Q NUMBER_EDGES-communityEdges Qadj NUMBER_EDGES-communityEdgesAdj]');
+  fprintf(fid, '%f             %f              %f                       %f              %f\n', [k Q NUMBER_EDGES-communityEdges Qadj NUMBER_EDGES-communityEdgesAdj]');
 end
 
 fclose(fid);
@@ -127,7 +127,7 @@ fclose(fid);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%% compute NMI for two partitions  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-nmi = nmi(partitionEigenVector, bestCommunityPartition);
+nmiOne = nmi(partitionEigenVector, bestCommunityPartition);
 nmiKmeans = nmi(partitionEigenVector, partitionAdj);
 
 
