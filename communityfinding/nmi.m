@@ -1,12 +1,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Compute normalized mutual information %%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%% normalisation - I(x,y)/ (1/2(H(x)*H(y))) %%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% normalisation - I(x,y)/ (1/2(H(x)+H(y))) %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function NMI = nmi(x, y)
 
 n = numel(x);
-x = reshape(x,1,n);
-y = reshape(y,1,n);
+x = reshape(x, 1, n);
+y = reshape(y, 1, n);
 
 min = min([x, y]);
 x = x - min + 1;
@@ -20,8 +20,8 @@ Pxy = nonzeros(Mx'*My/n);
 Hxy = -(Pxy'*log2(Pxy));
 
 %avoid the 0log0 
-Px = nonzeros(mean(Mx,1));
-Py = nonzeros(mean(My,1));
+Px = nonzeros(mean(Mx, 1));
+Py = nonzeros(mean(My, 1));
 
 % entropy of Px  - dot product of Px'*(logPx)
 Hx = -(Px'*log2(Px));
