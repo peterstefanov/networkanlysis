@@ -65,70 +65,70 @@ for d = 1 : NUMBER_NODES;
   nodes(d) = nodes(d) + 1;
 end
 
-NUMBER_K_COMMUNITIES = 17;
+NUMBER_K_COMMUNITIES = 3;
 
-fid = fopen('C:\Users\stefp\COMP42270\networkanalysisgit\networkanlysis\communityfinding\results.txt', 'w');
+fid = fopen('C:\Users\stefp\COMP42270\networkanalysisgit\networkanlysis\communityfinding\bestEigens.txt', 'w');
 header1 = 'Community number ';
-header2 = 'Modularity Eigen';
-header3 = 'Number of edges cut Eigen';
-header4 = 'Modularity Adj';
-header5 = 'Number of edges cut Adj';
-fprintf(fid, [header1  '    ' header2 '      ' header3 '       ' header4 '        ' header5  '\n']);
-
-communities = {};
-communitiesAdj = {};  
-for k = 2 : NUMBER_K_COMMUNITIES; 
-  % Use kmeans to cluster the points in the vector W
-  partitionEigenVector = kmeans(W, k);
+header2 = 'Modularity';
+header3 = 'Number of edges cuts';
+header4 = 'Time took';
+fprintf(fid, [header1  '    ' header2 '      ' header3 '        ' header4 '\n']);
+% same for adjacency
+communities = {}; 
+for k = 3 : NUMBER_K_COMMUNITIES; 
+  % Use kmeans to cluster the points in the vector W  
+  [classes, centers, sumd, D, timeElapsed] = kmeans(W, k);
   % Use the columns of A directly for the clustering
-  partitionAdj = kmeans(Adj, k);
+  %[classes, centers, sumd, D, timeElapsed] = kmeans(Adj, k);
+  
   for kk = 1 : k; 
     %for each community - create a vector with vertices in it
-    communities{kk} = nodes(partitionEigenVector == kk, 1);
-    communitiesAdj{kk} = nodes(partitionAdj == kk, 1);
+    communities{kk} = nodes(classes == kk, 1);
   end
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%% Compute modularity per each  k kmeans clustering %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   Q = 0;
-  Qadj = 0;
-  communityEdges = 0;
-  communityEdgesAdj = 0;
+  edge_cuts = 0;
+  overallCommunityEdges = 0;
   for i = 1 : length(communities);
+    comunity = communities{i};
+    adjSubgraph = Adj(comunity, comunity);
     
-    %get a subgraph from Adj, for each cluster and count the edges
-    %divided by two as it is udireted graph
-    communityEdges = sum(sum(Adj(communities{i}, communities{i})))/2; 
-    communityEdgesAdj = sum(sum(Adj(communitiesAdj{i}, communitiesAdj{i})))/2; 
+    %get the number of edges
+    %divide by 2 as is undirected graph
+    communityEdges = sum(sum(adjSubgraph))/2;  
+    
+    %sum up all edges per partition
+    overallCommunityEdges = overallCommunityEdges + communityEdges;
     
     %fraction of edges for this community
-    e_mm = communityEdges / NUMBER_EDGES;
-    e_mmAdj = communityEdgesAdj / NUMBER_EDGES;
+    edge_fraction = communityEdges / NUMBER_EDGES;
     
-    a_m = sum(sum(Adj(:, communities{i}))) / NUMBER_EDGES - e_mm;
-    a_mAdj = sum(sum(Adj(:, communitiesAdj{i}))) / NUMBER_EDGES - e_mmAdj;
+    %expected fraction of internal edges
+    edge_fraction_internal = (sum(sum(Adj(comunity, :))) / NUMBER_EDGES - edge_fraction)^2;
     
-    Q = Q + (e_mm - a_m^2);
-    Qadj = Qadj + (e_mmAdj - a_mAdj^2); 
+    Q = Q + (edge_fraction - edge_fraction_internal);
   end
-  
-  % number of edge cuts per community NUMBER_EDGES-communityEdges
-  fprintf(fid, '%f             %f              %f                       %f              %f\n', [k Q NUMBER_EDGES-communityEdges Qadj NUMBER_EDGES-communityEdgesAdj]');
-end
+ 
+
+  % number of edge cuts per partition NUMBER_EDGES-overallCommunityEdges
+  edge_cuts = NUMBER_EDGES-overallCommunityEdges;
+  fprintf(fid, '%f             %f              %f            %f \n', [k Q edge_cuts timeElapsed]');
+  end
 
 fclose(fid);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% Fast detection of communities using modularity optimisation %%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[bestCommunityPartition, modularity] = fast_mo(Adj);
+[communityPartition, modularity] = fast_mo(Adj);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%% compute NMI for two partitions  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% compute NMI for two methods  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-nmiOne = nmi(partitionEigenVector, bestCommunityPartition);
-nmiKmeans = nmi(partitionEigenVector, partitionAdj);
+nmiKmeansVsFast = nmi(communityPartition, classes);
 
 
 
