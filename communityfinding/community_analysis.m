@@ -54,8 +54,7 @@ nL = Dinv*(D - Adj);
 % 3 eigenvectors of smallest magnitude
 [V, E] = eigs(nL, 3, 'sm');
 
-% Use the second and third eigenvectors to form co-ordinates
-% and plot the resulting graph using gplot.
+% Use the second and third eigenvectors 
 W = V(:,2:3);
 
 %index the vector starting from 1 instead 0
@@ -67,7 +66,7 @@ end
 
 NUMBER_K_COMMUNITIES = 3;
 
-fid = fopen('C:\Users\stefp\COMP42270\networkanalysisgit\networkanlysis\communityfinding\bestEigens.txt', 'w');
+fid = fopen('C:\Users\stefp\COMP42270\networkanalysisgit\networkanlysis\communityfinding\kmeanEigens3.txt', 'w');
 header1 = 'Community number ';
 header2 = 'Modularity';
 header3 = 'Number of edges cuts';
@@ -93,42 +92,32 @@ for k = 3 : NUMBER_K_COMMUNITIES;
   edge_cuts = 0;
   overallCommunityEdges = 0;
   for i = 1 : length(communities);
-    comunity = communities{i};
-    adjSubgraph = Adj(comunity, comunity);
-    
+    community = communities{i};
+    adjSubgraph = Adj(community, community);   
     %get the number of edges
-    %divide by 2 as is undirected graph
-    communityEdges = sum(sum(adjSubgraph))/2;  
-    
-    %sum up all edges per partition
-    overallCommunityEdges = overallCommunityEdges + communityEdges;
-    
-    %fraction of edges for this community
-    edge_fraction = communityEdges / NUMBER_EDGES;
-    
-    %expected fraction of internal edges
-    edge_fraction_internal = (sum(sum(Adj(comunity, :))) / NUMBER_EDGES - edge_fraction)^2;
-    
-    Q = Q + (edge_fraction - edge_fraction_internal);
+    %divide by 2 as is undirected graph, needed for edge cut calculation
+    communityEdges = sum(sum(adjSubgraph))/2;     
+    %sum up all edges per partition, needed for edge cut calculation
+    overallCommunityEdges = overallCommunityEdges + communityEdges;   
+    Q = Q + newman_modularity(Adj, community);
   end
  
-
   % number of edge cuts per partition NUMBER_EDGES-overallCommunityEdges
   edge_cuts = NUMBER_EDGES-overallCommunityEdges;
   fprintf(fid, '%f             %f              %f            %f \n', [k Q edge_cuts timeElapsed]');
-  end
+end
 
 fclose(fid);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%% Fast detection of communities using modularity optimisation %%%%%%%%%%%%
+%%%%%%% Find communities using degree criteria of the neighbours %%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[communityPartition, modularity] = fast_mo(Adj);
+partitionDegreeCriteria = community_method(Adj);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%% compute NMI for two methods  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-nmiKmeansVsFast = nmi(communityPartition, classes);
+nmiKmeansVsDegreeNeighbours = nmi(partitionDegreeCriteria, classes);
 
 
 
