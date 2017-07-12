@@ -21,9 +21,9 @@
 ## @seealso{linkage}
 ## @end deftypefn
 
-function [classes, centers, sumd, D] = kmeans (data, k, varargin)
+function [classes, centers, sumd, D, timeElapsed] = kmeans (data, k, varargin)
   [reg, prop] = parseparams (varargin);
-
+  tic;
   ## defaults for options
   emptyaction = "error";
   start       = "sample";
@@ -108,6 +108,7 @@ function [classes, centers, sumd, D] = kmeans (data, k, varargin)
     ## update the current sum of distances
     sumd = objCost (data, classes, centers);
   endwhile
+  timeElapsed = toc;
 endfunction
 
 ## calculate the sum of distances

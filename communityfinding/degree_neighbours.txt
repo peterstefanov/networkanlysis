@@ -1,2 +1,2 @@
 Community number     Modularity      Number of edges cuts        Time took
-15                   0.825616        3436.000000                 48.225758 
+12.000000             0.757582              2904.000000            48.225758 

@@ -66,7 +66,7 @@ end
 
 NUMBER_K_COMMUNITIES = 3;
 
-fid = fopen('C:\Users\stefp\COMP42270\networkanalysisgit\networkanlysis\communityfinding\kmeanEigens3.txt', 'w');
+fid = fopen('result.txt', 'w');
 header1 = 'Community number ';
 header2 = 'Modularity';
 header3 = 'Number of edges cuts';
@@ -109,15 +109,15 @@ end
 
 fclose(fid);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%% Find communities using degree criteria of the neighbours %%%%%%%%%%%%%%%
+%%%%%%% Find communities using modularity criteria  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-partitionDegreeCriteria = community_method(Adj);
+partitionModularityCriteria = community_method(Adj);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%% compute NMI for two methods  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-nmiKmeansVsDegreeNeighbours = nmi(partitionDegreeCriteria, classes);
+nmiKmeansVsDegreeNeighbours = nmi(partitionModularityCriteria, classes);
 
 
 

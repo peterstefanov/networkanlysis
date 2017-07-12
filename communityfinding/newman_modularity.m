@@ -6,7 +6,7 @@ function [Q] = newman_modularity(Adj, comunity)
     numberEdges = sum(sum(Adj))/2;
     adjSubgraph = Adj(comunity, comunity);
     
-    %get the number of edges
+    %get the number of edges/degree
     %divide by 2 as is undirected graph
     communityEdges = sum(sum(adjSubgraph))/2;  
    

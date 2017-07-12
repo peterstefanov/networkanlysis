@@ -1,9 +1,9 @@
-function community = community_method(adj)    
+function [community, timeElapsed] = community_method(adj)    
     tic;
     % Number of edges 
     numberEdges = sum(sum(adj))/2;   
     % Degree vector
-    degree = sum(adj,2);
+    degree = sum(adj, 2);
     % Community degree
     community_degree = degree;    
     % Community per node
@@ -11,133 +11,87 @@ function community = community_method(adj)
 
     % Neighbours list for each node
     for i = 1 : length(adj)
-        Nbs{i} = find(adj(i, :));
-        Nbs{i}(Nbs{i} == i) = [];
+        Nieghbours{i} = find(adj(i, :));
+        Nieghbours{i}(Nieghbours{i} == i) = [];
     end
-       
+
     % Until nodes and communities can be updated
     nodes_flag = true;
-    communities_flag = true;
+    %communities_flag = true;
     while nodes_flag
         % node can be merge_flag
         merge_flag = true;
         while merge_flag
             merge_flag = false;
-
             % vector representation of all nodes in the graph
             list_of_nodes = 1 : length(adj);
-
             % Until list of nodes is not empty
             while ~isempty(list_of_nodes)
                 % Get a random node n from the list_of_nodes and remove it from it
-                idx = randi(length(list_of_nodes));
-                node = list_of_nodes(idx);
-                list_of_nodes(idx) = [];
-                % Find neighbour communities of node
-                node_n_community = unique(community(Nbs{node}));
-                node_n_community(node_n_community == community(node)) = [];
+                index = randi(length(list_of_nodes));               
+                node = list_of_nodes(index);  
+
+                % Get the list of all remaining nodes without the index/choosen node            
+                list_of_nodes(index) = [];
+      
+                % Get all neighbour's nodes of the index/choosen node which are in the community
+                node_n_neighbours = unique(community(Nieghbours{node}));                              
+                node_n_neighbours(node_n_neighbours == community(node)) = [];
+
                 % For each neighbour of community of node n
                 best_criteria = 0;
-                neighbours_of_node = Nbs{node};
-    
-                nb1 = neighbours_of_node(community(neighbours_of_node) == community(node));
-           
-                sum_nb1 = -sum(adj(node, nb1));
+                node_n_initial_neighbours = Nieghbours{node};  
+                % actual neighbours list of community of node n
+                neighbours_list_community = node_n_initial_neighbours(community(node_n_initial_neighbours) == community(node));  
+                %number of nodes in community
+                sum_neighbours_list_community = sum(adj(node, neighbours_list_community));
+
+                %comunity degree without the degree of the node itself
                 community_degree_node = community_degree(community(node)) - degree(node);
-                for i = 1 : length(node_n_community)
-                    current = node_n_community(i);
-                    next_neighbour_of_node = neighbours_of_node(community(neighbours_of_node) == current);
-                    criteria = sum_nb1 + sum(adj(node, next_neighbour_of_node));
-                    criteria = (criteria + (degree(node)*(community_degree_node - community_degree(current)))/(numberEdges * 2))/numberEdges;
+ 
+                % For all neighbours of the node 
+                for i = 1 : length(node_n_neighbours)
+                    current_node = node_n_neighbours(i);
+                    % list of neighbours nodes in the community of the current node
+                    current_node_neighbours_list = node_n_initial_neighbours(community(node_n_initial_neighbours) == current_node);
+                    % positive if the node(choosen) has more nodes in connections with some nodes from the neighbours list 
+                    % basically if the node and some of its neighbours has more connections than the number of node neighbours list, set this node as best possible  
+                    criteria = sum(adj(node, current_node_neighbours_list)) - sum_neighbours_list_community;
                     if criteria > best_criteria
                         best_criteria = criteria;
-                        best_node_community = node_n_community(i);
+                        best_node = node_n_neighbours(i);
                     end
                 end
 
+                % once we have the best node 
                 if best_criteria > 0
                     % Update total degree of communities
                     community_degree(community(node)) = community_degree(community(node)) - degree(node);
-                    community_degree(best_node_community) = community_degree(best_node_community) + degree(node);
-                    % Update community of the node with the best possible
-                    community(node) = best_node_community;
+                    community_degree(best_node) = community_degree(best_node) + degree(node);
+                    % Update community of the node with the index of the best possible node 
+                    % basically marking each node with the node index for which we found  
+                    community(node) = best_node;
                     % set flags to true
                     merge_flag = true;
-                    communities_flag = true;
-                end
-
-            end
-
-        end 
-        nodes_flag = false;
-            
-        if ~communities_flag
-            break;
-        end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%% Merging communiites %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Community merging
-        merge_flag = true;
-        while merge_flag
-            %fprintf('Community loop\n');
-            merge_flag = false;
-
-            % Create community list community_list
-            community_list = unique(community);
-
-            % While the list of candidates is not finished
-            while ~isempty(community_list)
-
-                % Get a random community n from the community_list and remove it from it
-                idx = randi(length(community_list));
-                community_n = community_list(idx);
-                community_list(idx) = []; 
-
-                % Find neighbour communities of community_n
-                neighbour_community_n = find(community == community_n);
-                node_n_community = unique(community(unique([Nbs{neighbour_community_n}])));
-                node_n_community(node_n_community == community_n) = [];
-                    
-                % For each neighbour community of community_n
-                best_criteria = 0;
-                sum_dn1 = sum(degree(neighbour_community_n));
-                for ncom_idx = 1 : length(node_n_community)
-                    % Compute criteria for merging community_n with current community
-                    next_neighbour_community_n = community == node_n_community(ncom_idx);
-                    criteria = (sum(sum(adj(neighbour_community_n, next_neighbour_community_n))) - sum_dn1*sum(degree(next_neighbour_community_n))/(numberEdges * 2))/numberEdges;
-                    if criteria > best_criteria
-                        best_criteria = criteria;
-                        best_node_n_community = node_n_community(ncom_idx);
-                    end
-                end
-                % If a move is worth it, do it
-                if best_criteria > 0
-                    % Update total degree of communities
-                    community_degree(best_node_n_community) = community_degree(best_node_n_community) + community_degree(community_n);
-                    community_degree(community_n) = 0;
-                    % Merge communities
-                    community(neighbour_community_n) = best_node_n_community;
-                    % set flags to true
-                    merge_flag = true;
-                    nodes_flag = true;
                 end
             end
         end 
-        communities_flag = false;
+        nodes_flag = false;           
     end 
     
+
     % Update/rearange communities
-    temporary_community = unique(community);
-    for i=1:length(community)
-        community(i) = find(temporary_community == community(i));
+    unique_community_index = unique(community);
+    for i = 1 : length(community)
+        community(i) = find(unique_community_index == community(i));
     end
+
     community = community';
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%% compute Newman's modularity and edge cut %%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    fid = fopen('newmans.txt', 'w');
+    fid = fopen('modularityOptim.txt', 'w');
     header1 = 'Community number ';
     header2 = 'Modularity';
     header3 = 'Number of edges cuts';
@@ -168,8 +122,8 @@ function community = community_method(adj)
   
     % record time taken
     timeElapsed = toc;
-    % number of edge cuts per partition NUMBER_EDGES-overallCommunityEdges
-    edge_cuts = numberEdges-overallCommunityEdges;
+    % number of edge cuts per partition numberEdges-overallCommunityEdges
+    edge_cuts = numberEdges - overallCommunityEdges;
     fprintf(fid, '%f             %f              %f            %f \n', [numberCommunities modularity edge_cuts timeElapsed]');
     fclose(fid);
 end  
