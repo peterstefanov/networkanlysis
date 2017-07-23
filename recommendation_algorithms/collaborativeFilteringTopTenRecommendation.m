@@ -1,20 +1,24 @@
 Y = load('rating.txt');
 Y = [Y(:, 1:2), Y(:,4)];
 
+trust = load('trust.txt');
+trust = [trust(:, 1), trust(:, 2)];
+trustSet = sparse(trust(:,1), trust(:,2));
+
 % get all unique user, sorted
 users = sort(unique([Y(:, 1)]));
 % number of users 
 NUMBER_USERS = numel(users);
 
-fid = fopen('C:\Users\stefp\COMP42270\networkanalysisgit\networkanlysis\recommendation_algorithms\allTopUser.txt', 'w');
+fid = fopen('results.txt', 'w');
 header1 = 'User Id ';
 header2 = 'ProductId';
 fprintf(fid, [header1  '      ' header2 '      ' header2 '      ' header2 '     ' header2 '       ' header2 '       ' header2 '        ' header2 '       ' header2 '       ' header2 '       ' header2 '\n']);
 
 %sparse metrix representation users - rows  items column
-trainSet = sparse(Y(:,1),Y(:,2),Y(:,3));
+trainSet = sparse(Y(:,1), Y(:,2), Y(:,3));
 tic;     
-for activeUser = 1 : NUMBER_USERS,  
+for activeUser = 1 : 8,%NUMBER_USERS,  
       
     %get all products rated by the activeUser       
     %find indices to elements in user column
@@ -24,14 +28,28 @@ for activeUser = 1 : NUMBER_USERS,
     %vector with products active user rated
     activeUserItems = submatrixActiveUser(:, 2);
 
+    %get all friends of the active user 
+    indActiveUserFriends = trust(:, 1) == activeUser;
+    submatrixActiveUserFriends = trust(indActiveUserFriends, :); 
+    %vector with active user friends
+    activeUserFriends = submatrixActiveUserFriends(:, 2);
+    
     %number of neighbours(most similar to the active user) to be considered
     k = 10;
-                
+              
     %similarities between active user and all the rest,
     %based on rating the same/most items like active user
     [sim, user_row] = computeSimilarities(activeUser, trainSet);
-        
-    %eliminate myself
+      
+    %check for all similar users, if any of them are close friend to
+    %the current user multiply the similarity by ten, this way these 
+    %users are placed higher in the rank (ten is just for prove of concept)  
+    NUMBER_USER_FRIENDS = numel(activeUserFriends);
+    for friend = 1 : NUMBER_USER_FRIENDS,
+      sim(activeUserFriends(friend)) = sim(activeUserFriends(friend)) * 10;
+    end  
+    
+    %eliminate the active user
     sim(activeUser) = -1;          
         
     %sort similarities in descending order, means the users rated
