@@ -6,7 +6,7 @@ users = sort(unique([Y(:, 1)]));
 % number of users 
 NUMBER_USERS = numel(users);
 
-fid = fopen('allTopUser.txt', 'w');
+fid = fopen('C:\Users\stefp\COMP42270\networkanalysisgit\networkanlysis\recommendation_algorithms\allTopUser.txt', 'w');
 header1 = 'User Id ';
 header2 = 'ProductId';
 fprintf(fid, [header1  '      ' header2 '      ' header2 '      ' header2 '     ' header2 '       ' header2 '       ' header2 '        ' header2 '       ' header2 '       ' header2 '       ' header2 '\n']);
@@ -47,7 +47,12 @@ for activeUser = 1 : NUMBER_USERS,
     %for all k neighbours get the top 10 rated products 
     for i = 1 : length(neighbours),
       nextNeighbour = neighbours(i);
-      [nextNeighbourProducts, itemsIndex] = sort(trainSet(nextNeighbour, :), 'descend');
+      %get only high rated products, rate > 4 or product rated multiple times
+      allRatedProducts = trainSet(nextNeighbour, :);
+      maskOnlyHighRated = trainSet(nextNeighbour, :) > 4;
+      allRatedProducts(maskOnlyHighRated == 0) = -1;
+      
+      [nextNeighbourProducts, itemsIndex] = sort(allRatedProducts, 'descend');
       itemsIndex = reshape(itemsIndex, numel(itemsIndex), 1);
       nextNeighbourTopRatedProducts = itemsIndex(1: 10);
       %add next neighbour ten top rated products to the vector
