@@ -10,7 +10,7 @@ users = sort(unique([Y(:, 1)]));
 % number of users 
 NUMBER_USERS = numel(users);
 
-fid = fopen('results.txt', 'w');
+fid = fopen('resultsWithTrustDataFirstTenUsers.txt', 'w');
 header1 = 'User Id ';
 header2 = 'ProductId';
 fprintf(fid, [header1  '      ' header2 '      ' header2 '      ' header2 '     ' header2 '       ' header2 '       ' header2 '        ' header2 '       ' header2 '       ' header2 '       ' header2 '\n']);
@@ -18,7 +18,7 @@ fprintf(fid, [header1  '      ' header2 '      ' header2 '      ' header2 '     
 %sparse metrix representation users - rows  items column
 trainSet = sparse(Y(:,1), Y(:,2), Y(:,3));
 tic;     
-for activeUser = 1 : 8,%NUMBER_USERS,  
+for activeUser = 1 : NUMBER_USERS,  %10 - for ten users only 
       
     %get all products rated by the activeUser       
     %find indices to elements in user column
